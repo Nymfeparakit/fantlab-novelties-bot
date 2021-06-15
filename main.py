@@ -1,3 +1,4 @@
+import dotenv
 import requests
 from dotenv import load_dotenv
 import os
@@ -39,10 +40,17 @@ async def process_novelties(message: types.Message):
     buy_shelve_id = buy_shelve['bookcase_id']
 
     # получаем id всех изданий с полки "куплю"
-    response_text = requests.get(f'https://api.fantlab.ru/user/175721/bookcase/{buy_shelve_id}').text
-    print(f'https://api.fantlab.ru/user/175721/bookcase/{buy_shelve_id}')
-    shelve_books = json.loads(response_text)['bookcase_items']
-    shelve_books_ids = [item['edition_id'] for item in shelve_books]
+    shelve_books_ids = []
+    offset = 0
+    # TODO: возможно здесь можно сделать генератор
+    while True:
+        response_text = requests.get(f'https://api.fantlab.ru/user/175721/bookcase/{buy_shelve_id}?offset={offset}').text
+        print(f'https://api.fantlab.ru/user/175721/bookcase/{buy_shelve_id}')
+        shelve_books = json.loads(response_text)['bookcase_items']
+        shelve_books_ids.extend([item['edition_id'] for item in shelve_books])
+        if not shelve_books:
+            break
+        offset += 10
 
     # получаем сведения о новинках
     response_text = requests.get('https://api.fantlab.ru/pubnews').text
