@@ -58,9 +58,14 @@ async def process_novelties(message: types.Message):
     for news_item in news:
         if news_item['edition_id'] in shelve_books_ids:
             print(news_item['edition_id'])
-            await message.reply(f"""Книга с полки 'Куплю' есть в продаже:\\
-                                * {news_item["name"]}""",
-                                parse_mode='Markdown')
+            message_text = f"""Книга с полки 'Куплю' есть в продаже: 
+            \* {news_item['name']}
+            """
+            if news_item['ozon_available']:
+                message_text += f"[Ozon - {news_item['ozon_cost']}](https://www.ozon.ru/context/detail/id/{news_item['ozon_id']}/)\n" 
+            if news_item['labirint_available']:
+                message_text += f"[Лабиринт - {news_item['labirint_cost']}](https://www.labirint.ru/books/{news_item['labirint_id']}/)\n" 
+            await message.reply(message_text, parse_mode='Markdown')
         else:
             print(f'item not on shelve: {news_item["edition_id"]}')
     print(shelve_books_ids)
