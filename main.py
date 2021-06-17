@@ -6,15 +6,14 @@ from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 import json
+from .settings import BOT_TOKEN, HEROKU_APP_NAME, WEBHOOK_HOST, WEBHOOK_PATH, WEBHOOK_URL, WEBAPP_PORT, WEBAPP_HOST
 
 
 load_dotenv()
 
-BOT_TOKEN = os.environ.get('FANTLAB_NOVS_BOT_TOKEN')
-
 
 bot = Bot(token=BOT_TOKEN)
-dispatcher_ = Dispatcher(bot)
+dp = Dispatcher(bot)
 
 
 login = 'RazorX' # user_id = 175721
@@ -25,12 +24,12 @@ client_id = '175721'
 REDIRECT_URI = 'https://t.me/triviabot?start=Name'
 
 
-@dispatcher_.message_handler(commands=['start'])
+@dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
     await message.reply('Hi! I am a Fantlab bot!')
 
 
-@dispatcher_.message_handler(commands=['process'])
+@dp.message_handler(commands=['process'])
 async def process_novelties(message: types.Message):
     #TODO: вынести url к api в контстанту
     # получаем полку "Куплю"
@@ -71,6 +70,18 @@ async def process_novelties(message: types.Message):
     print(shelve_books_ids)
 
 
+async def on_startup(dp):
+    await bot.set_webhook(WEBHOOK_URL, drop_pending_updates=True)
+
+
 if __name__ == '__main__':
-    r = requests.get(f'https://api.fantlab.ru/oauth/login?response_type=code&client_id={client_id}&redirect_uri={REDIRECT_URI}')
-    executor.start_polling(dispatcher_, skip_updates=True)
+    executor.start_webhook(
+        dispatcher=dp,
+        webhook_path=WEBHOOK_PATH,
+        skip_updates=True,
+        on_startup=on_startup,
+        host=WEBAPP_HOST,
+        port=WEBAPP_PORT
+        )
+    # r = requests.get(f'https://api.fantlab.ru/oauth/login?response_type=code&client_id={client_id}&redirect_uri={REDIRECT_URI}')
+    # executor.start_polling(dp, skip_updates=True)
