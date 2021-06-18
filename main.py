@@ -19,13 +19,10 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot)
 
 
-login = 'RazorX' # user_id = 175721
-# r = requests.get(f'https://api.fantlab.ru/userlogin?usersearch={login}')
-# print(r.text)
+login = 'RazorX'
 
 client_id = '175721'
-REDIRECT_URI = 'https://t.me/triviabot?start=Name'
-SEARCH_DELAY = 60 * 60
+SEARCH_DELAY = 60 * 60 # Интервал для поиска книг
 
 
 @dp.message_handler(commands=['start'])
@@ -35,8 +32,6 @@ async def process_start_command(message: types.Message):
     loop.call_later(SEARCH_DELAY, repeat, process_novelties, loop, message.from_user.id)
 
 
-# @dp.message_handler(commands=['process'])
-# async def process_novelties(message: types.Message):
 async def process_novelties(user_id):
     await bot.send_message(user_id, "Начинаю искать книги")
     #TODO: вынести url к api в контстанту
