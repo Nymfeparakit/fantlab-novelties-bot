@@ -67,21 +67,19 @@ async def process_novelties(message: types.Message):
             await message.reply(message_text, parse_mode='Markdown')
         else:
             print(f'item not on shelve: {news_item["edition_id"]}')
-    print(shelve_books_ids)
 
 
-async def on_startup(dp):
-    await bot.set_webhook(WEBHOOK_URL, drop_pending_updates=True)
+# async def on_startup(dp):
+    # await bot.set_webhook(WEBHOOK_URL, drop_pending_updates=True)
 
 
 if __name__ == '__main__':
-    executor.start_webhook(
-        dispatcher=dp,
-        webhook_path=WEBHOOK_PATH,
-        skip_updates=True,
-        on_startup=on_startup,
-        host=WEBAPP_HOST,
-        port=WEBAPP_PORT
-        )
-    # r = requests.get(f'https://api.fantlab.ru/oauth/login?response_type=code&client_id={client_id}&redirect_uri={REDIRECT_URI}')
-    # executor.start_polling(dp, skip_updates=True)
+    # executor.start_webhook(
+    #     dispatcher=dp,
+    #     webhook_path=WEBHOOK_PATH,
+    #     skip_updates=True,
+    #     on_startup=on_startup,
+    #     host=WEBAPP_HOST,
+    #     port=WEBAPP_PORT
+    #     )
+    executor.start_polling(dp, skip_updates=True)
