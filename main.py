@@ -1,8 +1,5 @@
-from aiogram.types import user
-import dotenv
 import requests
 from dotenv import load_dotenv
-import os
 from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
