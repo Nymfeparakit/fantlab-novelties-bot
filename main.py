@@ -25,13 +25,14 @@ login = 'RazorX' # user_id = 175721
 
 client_id = '175721'
 REDIRECT_URI = 'https://t.me/triviabot?start=Name'
+SEARCH_DELAY = 60 * 60
 
 
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
     await message.reply('Hi! I am a Fantlab bot!')
     loop = asyncio.get_event_loop()
-    loop.call_later(5, repeat, process_novelties, loop, message.from_user.id)
+    loop.call_later(SEARCH_DELAY, repeat, process_novelties, loop, message.from_user.id)
 
 
 # @dp.message_handler(commands=['process'])
@@ -86,7 +87,7 @@ async def process_novelties(user_id):
 
 def repeat(coro, loop, user_id):
     asyncio.ensure_future(coro(user_id), loop=loop)
-    loop.call_later(10, repeat, coro, loop, user_id)
+    loop.call_later(SEARCH_DELAY, repeat, coro, loop, user_id)
 
 
 if __name__ == '__main__':
