@@ -21,6 +21,8 @@ login = 'RazorX'
 client_id = '175721'
 SEARCH_DELAY = 60 * 60 # Интервал для поиска книг
 FANTLAB_API_URL = 'https://api.fantlab.ru/'
+OZON_EDITION_URL = 'https://www.ozon.ru/context/detail/id/' # URL для доступа к изданию на ozon по id
+LABIRINT_EDITION_URL = 'https://www.labirint.ru/books/' # URL для доступа к изданию на лабиринте по id
 
 
 @dp.message_handler(commands=['start'])
@@ -32,7 +34,6 @@ async def process_start_command(message: types.Message):
 
 async def process_novelties(user_id):
     await bot.send_message(user_id, "Начинаю искать книги")
-    #TODO: вынести url к api в контстанту
     # получаем полку "Куплю"
     response_text = requests.get(f'{FANTLAB_API_URL}user/175721/bookcases').text
     shelves = json.loads(response_text)
@@ -64,9 +65,9 @@ async def process_novelties(user_id):
             \* {news_item['name']}
             """
             if news_item['ozon_available']:
-                message_text += f"[Ozon - {news_item['ozon_cost']}](https://www.ozon.ru/context/detail/id/{news_item['ozon_id']}/)\n" 
+                message_text += f"[Ozon - {news_item['ozon_cost']}]({OZON_EDITION_URL}{news_item['ozon_id']}/)\n" 
             if news_item['labirint_available']:
-                message_text += f"[Лабиринт - {news_item['labirint_cost']}](https://www.labirint.ru/books/{news_item['labirint_id']}/)\n" 
+                message_text += f"[Лабиринт - {news_item['labirint_cost']}]({LABIRINT_EDITION_URL}{news_item['labirint_id']}/)\n" 
             await bot.send_message(user_id, message_text, parse_mode='Markdown')
         else:
             print(f'item not on shelve: {news_item["edition_id"]}')
