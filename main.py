@@ -1,3 +1,4 @@
+from aiogram.types import user
 import dotenv
 import requests
 from dotenv import load_dotenv
@@ -6,7 +7,9 @@ from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 import json
-from settings import BOT_TOKEN, HEROKU_APP_NAME, WEBHOOK_HOST, WEBHOOK_PATH, WEBHOOK_URL, WEBAPP_PORT, WEBAPP_HOST
+# from settings import BOT_TOKEN, HEROKU_APP_NAME, WEBHOOK_HOST, WEBHOOK_PATH, WEBHOOK_URL, WEBAPP_PORT, WEBAPP_HOST
+from settings import BOT_TOKEN
+import asyncio
 
 
 load_dotenv()
@@ -27,10 +30,14 @@ REDIRECT_URI = 'https://t.me/triviabot?start=Name'
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
     await message.reply('Hi! I am a Fantlab bot!')
+    loop = asyncio.get_event_loop()
+    loop.call_later(5, repeat, process_novelties, loop, message.from_user.id)
 
 
-@dp.message_handler(commands=['process'])
-async def process_novelties(message: types.Message):
+# @dp.message_handler(commands=['process'])
+# async def process_novelties(message: types.Message):
+async def process_novelties(user_id):
+    await bot.send_message(user_id, "Начинаю искать книги")
     #TODO: вынести url к api в контстанту
     # получаем полку "Куплю"
     response_text = requests.get('https://api.fantlab.ru/user/175721/bookcases').text
@@ -54,8 +61,10 @@ async def process_novelties(message: types.Message):
     # получаем сведения о новинках
     response_text = requests.get('https://api.fantlab.ru/pubnews').text
     news = json.loads(response_text)['objects']
+    found_book = False
     for news_item in news:
         if news_item['edition_id'] in shelve_books_ids:
+            found_book = True
             print(news_item['edition_id'])
             message_text = f"""Книга с полки 'Куплю' есть в продаже: 
             \* {news_item['name']}
@@ -64,13 +73,20 @@ async def process_novelties(message: types.Message):
                 message_text += f"[Ozon - {news_item['ozon_cost']}](https://www.ozon.ru/context/detail/id/{news_item['ozon_id']}/)\n" 
             if news_item['labirint_available']:
                 message_text += f"[Лабиринт - {news_item['labirint_cost']}](https://www.labirint.ru/books/{news_item['labirint_id']}/)\n" 
-            await message.reply(message_text, parse_mode='Markdown')
+            await bot.send_message(user_id, message_text, parse_mode='Markdown')
         else:
             print(f'item not on shelve: {news_item["edition_id"]}')
+    if not found_book:
+        await bot.send_message(user_id, "Книги не найдены")
 
 
 # async def on_startup(dp):
     # await bot.set_webhook(WEBHOOK_URL, drop_pending_updates=True)
+
+
+def repeat(coro, loop, user_id):
+    asyncio.ensure_future(coro(user_id), loop=loop)
+    loop.call_later(10, repeat, coro, loop, user_id)
 
 
 if __name__ == '__main__':
