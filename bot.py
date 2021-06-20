@@ -72,7 +72,7 @@ async def process_novelties(user_id):
                 message_text += f"[Ozon - {news_item['ozon_cost']}]({OZON_EDITION_URL}{news_item['ozon_id']}/)\n" 
             if news_item['labirint_available']:
                 message_text += f"[Лабиринт - {news_item['labirint_cost']}]({LABIRINT_EDITION_URL}{news_item['labirint_id']}/)\n" 
-            await bot.send_message(user_id, message_text, parse_mode='Markdown')
+            await bot.send_message(user_id, message_text, parse_mode='MarkdownV2')
         else:
             print(f'item not on shelve: {news_item["edition_id"]}')
     if not found_book:
