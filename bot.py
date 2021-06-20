@@ -27,7 +27,7 @@ LABIRINT_EDITION_URL = 'https://www.labirint.ru/books/' # URL для досту�
 
 @dp.message_handler(commands=['start'])
 async def process_start_command(message: types.Message):
-    await message.reply('Hi! I am a Fantlab bot!')
+    await message.reply("Привет! Я бот для fantlab.ru!")
     loop = asyncio.get_event_loop()
     loop.call_later(SEARCH_DELAY, repeat, process_novelties, loop, message.from_user.id)
 
