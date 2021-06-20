@@ -7,13 +7,16 @@ import json
 # from settings import BOT_TOKEN, HEROKU_APP_NAME, WEBHOOK_HOST, WEBHOOK_PATH, WEBHOOK_URL, WEBAPP_PORT, WEBAPP_HOST
 from settings import BOT_TOKEN
 import asyncio
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.dispatcher import FSMContext
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 
 load_dotenv()
 
 
 bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 login = 'RazorX'
@@ -25,11 +28,27 @@ OZON_EDITION_URL = 'https://www.ozon.ru/context/detail/id/' # URL для дос�
 LABIRINT_EDITION_URL = 'https://www.labirint.ru/books/' # URL для доступа к изданию на лабиринте по id
 
 
-@dp.message_handler(commands=['start'])
+class SetLoginStatesGroup(StatesGroup):
+    waiting_for_login = State()
+
+
+@dp.message_handler(commands=['start'], state='*')
 async def process_start_command(message: types.Message):
     await message.answer("Привет! Я бот для fantlab.ru!")
-    loop = asyncio.get_event_loop()
-    loop.call_later(SEARCH_DELAY, repeat, process_novelties, loop, message.from_user.id)
+    await message.answer("Напишите свой логин")
+    await SetLoginStatesGroup.waiting_for_login.set()
+    # loop = asyncio.get_event_loop()
+    # loop.call_later(SEARCH_DELAY, repeat, process_novelties, loop, message.from_user.id)
+
+
+@dp.message_handler(state=SetLoginStatesGroup.waiting_for_login)
+async def login_set(message: types.Message, state: FSMContext):
+    await message.answer("Записываю логин")
+    user_data = {}
+    user_data['login'] = message.text
+    with open('fantlab_bot_user_data.json', 'w') as f:
+        json.dump(user_data, f)
+    await state.finish()
 
 
 def get_books_ids_from_shelf(shelve_id):
