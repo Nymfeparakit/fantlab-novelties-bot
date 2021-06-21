@@ -35,7 +35,7 @@ class SetLoginStatesGroup(StatesGroup):
 @dp.message_handler(commands=['start'], state='*')
 async def process_start_command(message: types.Message):
     await message.answer("Привет! Я бот для fantlab.ru!")
-    await message.answer("Напишите свой логин")
+    await message.answer("Напишите свой логин на fantlab.ru")
     await SetLoginStatesGroup.waiting_for_login.set()
     # loop = asyncio.get_event_loop()
     # loop.call_later(SEARCH_DELAY, repeat, process_novelties, loop, message.from_user.id)
@@ -43,11 +43,19 @@ async def process_start_command(message: types.Message):
 
 @dp.message_handler(state=SetLoginStatesGroup.waiting_for_login)
 async def login_set(message: types.Message, state: FSMContext):
-    await message.answer("Записываю логин")
-    user_data = {}
-    user_data['login'] = message.text
+    login = message.text
+    # Узнаем по логину id
+    response_text = requests.get(f'{FANTLAB_API_URL}userlogin?usersearch={login}').text
+    user_id = json.loads(response_text)['user_id']
+    print(f'user id: {user_id}')
+    if not user_id: # если такого логина не существует
+        await message.answer("Такого логина не существует. Попробуйте ввести еще раз")
+        return
+    # Записываем данные пользователя в json
+    user_data = {'login': login, 'user_id': user_id}
     with open('fantlab_bot_user_data.json', 'w') as f:
         json.dump(user_data, f)
+    await message.answer("Я запомнил ваш логин!")
     await state.finish()
 
 
