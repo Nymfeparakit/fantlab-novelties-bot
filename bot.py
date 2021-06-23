@@ -11,6 +11,7 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import logging
+import api_helper
 
 
 load_dotenv()
@@ -43,7 +44,9 @@ async def process_start_command(message: types.Message):
 @dp.message_handler(state=SetLoginStatesGroup.waiting_for_login)
 async def login_set(message: types.Message, state: FSMContext):
     login = message.text
-    await write_login_and_id(login, message)
+    result = await write_login_and_id(login, message)
+    if not result:
+        return
     await state.finish()
     # Запускаем процесс периодического поллинга новостей для нового id
     loop = asyncio.get_event_loop()
@@ -52,16 +55,21 @@ async def login_set(message: types.Message, state: FSMContext):
 
 async def write_login_and_id(login, message):
     # Узнаем по логину id
-    response_text = requests.get(f'{FANTLAB_API_URL}userlogin?usersearch={login}').text
-    user_id = json.loads(response_text)['user_id']
+    resp_json = api_helper.get(f'{FANTLAB_API_URL}userlogin?usersearch={login}')
+    if not resp_json:
+        await message.answer("Ошибка ответа сервера fantlab. Попробуйте позже.")
+        return False
+    # user_id = json.loads(response_text)['user_id']
+    user_id = resp_json['user_id']
     if not user_id: # если такого логина не существует
         await message.answer("Такого логина не существует. Попробуйте ввести еще раз")
-        return
+        return False
     # Записываем данные пользователя в json
     user_data = {'login': login, 'user_id': user_id}
     with open('fantlab_bot_user_data.json', 'w') as f:
         json.dump(user_data, f)
     await message.answer("Я запомнил ваш логин!")
+    return True
 
 
 def read_user_id():
@@ -81,10 +89,10 @@ def get_books_ids_from_shelf(shelf_id, user_id):
     shelf_books_ids = []
     offset = 0
     while True:
-        response_text = requests.get(f'{FANTLAB_API_URL}user/{user_id}/bookcase/{shelf_id}?offset={offset}').text
-        shelf_books = json.loads(response_text)['bookcase_items']
+        shelf_info = api_helper.get(f'{FANTLAB_API_URL}user/{user_id}/bookcase/{shelf_id}?offset={offset}')
+        shelf_books = shelf_info['bookcase_items']
         shelf_books_ids.extend([item['edition_id'] for item in shelf_books])
-        if not shelf_books: # если больше нет книг по запросу
+        if not shelf_info: # если больше нет книг по запросу
             return shelf_books_ids
         offset += 10
 
@@ -96,8 +104,10 @@ async def process_novelties(user_id):
     fantlab_user_id = read_user_id()
     # получаем полку "Куплю"
     # TODO: обработка ошибок от сервера
-    response_text = requests.get(f'{FANTLAB_API_URL}user/{fantlab_user_id}/bookcases').text
-    shelfs = json.loads(response_text)
+    # response_text = requests.get(f'{FANTLAB_API_URL}user/{fantlab_user_id}/bookcases').text
+    shelfs = api_helper.get(f'{FANTLAB_API_URL}user/{fantlab_user_id}/bookcases')
+    if not shelfs:
+        return
     # TODO: исправить shelf -> shelf
     buy_shelf = list(filter(lambda shelf: shelf['bookcase_name'] == 'Куплю', shelfs))[0]
     buy_shelf_id = buy_shelf['bookcase_id']
