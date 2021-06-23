@@ -44,6 +44,14 @@ async def process_start_command(message: types.Message):
 @dp.message_handler(state=SetLoginStatesGroup.waiting_for_login)
 async def login_set(message: types.Message, state: FSMContext):
     login = message.text
+    await write_login_and_id(login, message)
+    await state.finish()
+    # Запускаем процесс периодического поллинга новостей для нового id
+    loop = asyncio.get_event_loop()
+    loop.call_later(SEARCH_DELAY, repeat, process_novelties, loop, message.from_user.id)
+
+
+async def write_login_and_id(login, message):
     # Узнаем по логину id
     response_text = requests.get(f'{FANTLAB_API_URL}userlogin?usersearch={login}').text
     user_id = json.loads(response_text)['user_id']
@@ -56,7 +64,18 @@ async def login_set(message: types.Message, state: FSMContext):
     with open('fantlab_bot_user_data.json', 'w') as f:
         json.dump(user_data, f)
     await message.answer("Я запомнил ваш логин!")
-    await state.finish()
+
+
+def read_user_id():
+    with open('fantlab_bot_user_data.json') as f:
+        user_data = json.load(f)
+        return user_data['user_id'] 
+
+
+@dp.message_handler(commands=['login'])
+async def set_login(message: types.Message):
+    await message.answer("Напишите свой логин на fantlab.ru")
+    await SetLoginStatesGroup.waiting_for_login.set()
 
 
 def get_books_ids_from_shelf(shelve_id):
