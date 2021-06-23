@@ -19,8 +19,6 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 
-login = 'RazorX'
-
 SEARCH_DELAY = 10 # Интервал для поиска книг
 FANTLAB_API_URL = 'https://api.fantlab.ru/'
 OZON_EDITION_URL = 'https://www.ozon.ru/context/detail/id/' # URL для доступа к изданию на ozon по id
