@@ -21,8 +21,7 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 
 login = 'RazorX'
 
-client_id = '175721'
-SEARCH_DELAY = 60 * 60 # Интервал для поиска книг
+SEARCH_DELAY = 10 # Интервал для поиска книг
 FANTLAB_API_URL = 'https://api.fantlab.ru/'
 OZON_EDITION_URL = 'https://www.ozon.ru/context/detail/id/' # URL для доступа к изданию на ozon по id
 LABIRINT_EDITION_URL = 'https://www.labirint.ru/books/' # URL для доступа к изданию на лабиринте по id
@@ -55,7 +54,6 @@ async def write_login_and_id(login, message):
     # Узнаем по логину id
     response_text = requests.get(f'{FANTLAB_API_URL}userlogin?usersearch={login}').text
     user_id = json.loads(response_text)['user_id']
-    print(f'user id: {user_id}')
     if not user_id: # если такого логина не существует
         await message.answer("Такого логина не существует. Попробуйте ввести еще раз")
         return
@@ -67,6 +65,7 @@ async def write_login_and_id(login, message):
 
 
 def read_user_id():
+    # TODO: обработка ошибки на случай, если файла нет
     with open('fantlab_bot_user_data.json') as f:
         user_data = json.load(f)
         return user_data['user_id'] 
@@ -78,12 +77,12 @@ async def set_login(message: types.Message):
     await SetLoginStatesGroup.waiting_for_login.set()
 
 
-def get_books_ids_from_shelf(shelve_id):
+def get_books_ids_from_shelf(shelve_id, user_id):
     shelve_books_ids = []
     offset = 0
     while True:
-        response_text = requests.get(f'{FANTLAB_API_URL}user/175721/bookcase/{buy_shelve_id}?offset={offset}').text
-        print(f'{FANTLAB_API_URL}user/175721/bookcase/{buy_shelve_id}')
+        response_text = requests.get(f'{FANTLAB_API_URL}user/{user_id}/bookcase/{shelve_id}?offset={offset}').text
+        print(f'{FANTLAB_API_URL}user/{user_id}/bookcase/{shelve_id}')
         shelve_books = json.loads(response_text)['bookcase_items']
         shelve_books_ids.extend([item['edition_id'] for item in shelve_books])
         if not shelve_books: # если больше нет книг по запросу
@@ -93,15 +92,18 @@ def get_books_ids_from_shelf(shelve_id):
 
 async def process_novelties(user_id):
     await bot.send_message(user_id, "Начинаю искать книги")
+    # TODO: обработка ошибки на случай, если логин не был прочитан
+    fantlab_user_id = read_user_id()
     # получаем полку "Куплю"
-    response_text = requests.get(f'{FANTLAB_API_URL}user/175721/bookcases').text
+    # TODO: обработка ошибок от сервера
+    response_text = requests.get(f'{FANTLAB_API_URL}user/{fantlab_user_id}/bookcases').text
     shelves = json.loads(response_text)
     # TODO: исправить shelve -> shelf
     buy_shelve = list(filter(lambda shelve: shelve['bookcase_name'] == 'Куплю', shelves))[0]
     buy_shelve_id = buy_shelve['bookcase_id']
 
     # получаем id всех изданий с полки "куплю"
-    shelve_books_ids = get_books_ids_from_shelf(buy_shelve_id)
+    shelve_books_ids = get_books_ids_from_shelf(buy_shelve_id, fantlab_user_id)
 
     # получаем сведения о новинках
     response_text = requests.get(f'{FANTLAB_API_URL}pubnews').text
