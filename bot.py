@@ -77,16 +77,16 @@ async def set_login(message: types.Message):
     await SetLoginStatesGroup.waiting_for_login.set()
 
 
-def get_books_ids_from_shelf(shelve_id, user_id):
-    shelve_books_ids = []
+def get_books_ids_from_shelf(shelf_id, user_id):
+    shelf_books_ids = []
     offset = 0
     while True:
-        response_text = requests.get(f'{FANTLAB_API_URL}user/{user_id}/bookcase/{shelve_id}?offset={offset}').text
-        print(f'{FANTLAB_API_URL}user/{user_id}/bookcase/{shelve_id}')
-        shelve_books = json.loads(response_text)['bookcase_items']
-        shelve_books_ids.extend([item['edition_id'] for item in shelve_books])
-        if not shelve_books: # если больше нет книг по запросу
-            return shelve_books_ids
+        response_text = requests.get(f'{FANTLAB_API_URL}user/{user_id}/bookcase/{shelf_id}?offset={offset}').text
+        print(f'{FANTLAB_API_URL}user/{user_id}/bookcase/{shelf_id}')
+        shelf_books = json.loads(response_text)['bookcase_items']
+        shelf_books_ids.extend([item['edition_id'] for item in shelf_books])
+        if not shelf_books: # если больше нет книг по запросу
+            return shelf_books_ids
         offset += 10
 
 
@@ -97,20 +97,20 @@ async def process_novelties(user_id):
     # получаем полку "Куплю"
     # TODO: обработка ошибок от сервера
     response_text = requests.get(f'{FANTLAB_API_URL}user/{fantlab_user_id}/bookcases').text
-    shelves = json.loads(response_text)
-    # TODO: исправить shelve -> shelf
-    buy_shelve = list(filter(lambda shelve: shelve['bookcase_name'] == 'Куплю', shelves))[0]
-    buy_shelve_id = buy_shelve['bookcase_id']
+    shelfs = json.loads(response_text)
+    # TODO: исправить shelf -> shelf
+    buy_shelf = list(filter(lambda shelf: shelf['bookcase_name'] == 'Куплю', shelfs))[0]
+    buy_shelf_id = buy_shelf['bookcase_id']
 
     # получаем id всех изданий с полки "куплю"
-    shelve_books_ids = get_books_ids_from_shelf(buy_shelve_id, fantlab_user_id)
+    shelf_books_ids = get_books_ids_from_shelf(buy_shelf_id, fantlab_user_id)
 
     # получаем сведения о новинках
     response_text = requests.get(f'{FANTLAB_API_URL}pubnews').text
     news = json.loads(response_text)['objects']
     found_book = False
     for news_item in news:
-        if news_item['edition_id'] in shelve_books_ids:
+        if news_item['edition_id'] in shelf_books_ids:
             found_book = True
             print(news_item['edition_id'])
             message_text = f"""Книга с полки 'Куплю' есть в продаже: 
@@ -122,7 +122,7 @@ async def process_novelties(user_id):
                 message_text += f"[Лабиринт - {news_item['labirint_cost']}]({LABIRINT_EDITION_URL}{news_item['labirint_id']}/)\n" 
             await bot.send_message(user_id, message_text, parse_mode='MarkdownV2')
         else:
-            print(f'item not on shelve: {news_item["edition_id"]}')
+            print(f'item not on shelf: {news_item["edition_id"]}')
     if not found_book:
         await bot.send_message(user_id, "Книги не найдены")
 
