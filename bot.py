@@ -10,10 +10,12 @@ import asyncio
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+import logging
 
 
 load_dotenv()
 
+logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -80,7 +82,6 @@ def get_books_ids_from_shelf(shelf_id, user_id):
     offset = 0
     while True:
         response_text = requests.get(f'{FANTLAB_API_URL}user/{user_id}/bookcase/{shelf_id}?offset={offset}').text
-        print(f'{FANTLAB_API_URL}user/{user_id}/bookcase/{shelf_id}')
         shelf_books = json.loads(response_text)['bookcase_items']
         shelf_books_ids.extend([item['edition_id'] for item in shelf_books])
         if not shelf_books: # если больше нет книг по запросу
@@ -90,6 +91,7 @@ def get_books_ids_from_shelf(shelf_id, user_id):
 
 async def process_novelties(user_id):
     await bot.send_message(user_id, "Начинаю искать книги")
+    logging.info("Бот начинает искать книги")
     # TODO: обработка ошибки на случай, если логин не был прочитан
     fantlab_user_id = read_user_id()
     # получаем полку "Куплю"
@@ -110,7 +112,7 @@ async def process_novelties(user_id):
     for news_item in news:
         if news_item['edition_id'] in shelf_books_ids:
             found_book = True
-            print(news_item['edition_id'])
+            logging.info(f"found item on shelf: {news_item['edition_id']}")
             message_text = f"""Книга с полки 'Куплю' есть в продаже: 
             \* {news_item['name']}
             """
@@ -119,10 +121,9 @@ async def process_novelties(user_id):
             if news_item['labirint_available']:
                 message_text += f"[Лабиринт - {news_item['labirint_cost']}]({LABIRINT_EDITION_URL}{news_item['labirint_id']}/)\n" 
             await bot.send_message(user_id, message_text, parse_mode='MarkdownV2')
-        else:
-            print(f'item not on shelf: {news_item["edition_id"]}')
     if not found_book:
         await bot.send_message(user_id, "Книги не найдены")
+        logging.info("Книг не найдено")
 
 
 # async def on_startup(dp):
