@@ -41,6 +41,12 @@ async def process_start_command(message: types.Message):
     # loop.call_later(SEARCH_DELAY, repeat, process_novelties, loop, message.from_user.id)
 
 
+@dp.message_handler(commands=['help'], state='*')
+async def process_help_command(message: types.Message):
+    await message.answer('/help - Справка по командам\n'
+                         '/login - Задать логин с сайта fantlab.ru')
+
+
 @dp.message_handler(state=SetLoginStatesGroup.waiting_for_login)
 async def login_set(message: types.Message, state: FSMContext):
     login = message.text
