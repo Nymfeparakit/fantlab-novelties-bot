@@ -59,7 +59,6 @@ async def write_login_and_id(login, message):
     if not resp_json:
         await message.answer("Ошибка ответа сервера fantlab. Попробуйте позже.")
         return False
-    # user_id = json.loads(response_text)['user_id']
     user_id = resp_json['user_id']
     if not user_id: # если такого логина не существует
         await message.answer("Такого логина не существует. Попробуйте ввести еще раз")
@@ -108,7 +107,6 @@ async def process_novelties(user_id):
     shelfs = api_helper.get(f'{FANTLAB_API_URL}user/{fantlab_user_id}/bookcases')
     if not shelfs:
         return
-    # TODO: исправить shelf -> shelf
     buy_shelf = list(filter(lambda shelf: shelf['bookcase_name'] == 'Куплю', shelfs))[0]
     buy_shelf_id = buy_shelf['bookcase_id']
 
