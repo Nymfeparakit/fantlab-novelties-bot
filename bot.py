@@ -5,7 +5,7 @@ from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 import json
 # from settings import BOT_TOKEN, HEROKU_APP_NAME, WEBHOOK_HOST, WEBHOOK_PATH, WEBHOOK_URL, WEBAPP_PORT, WEBAPP_HOST
-from settings import BOT_TOKEN
+from settings import BOT_TOKEN, SEARCH_DELAY
 import asyncio
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
@@ -22,7 +22,7 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 
-SEARCH_DELAY = 10 # Интервал для поиска книг
+SEARCH_DELAY = 60 * 60 # Интервал для поиска книг
 FANTLAB_API_URL = 'https://api.fantlab.ru/'
 OZON_EDITION_URL = 'https://www.ozon.ru/context/detail/id/' # URL для доступа к изданию на ozon по id
 LABIRINT_EDITION_URL = 'https://www.labirint.ru/books/' # URL для доступа к изданию на лабиринте по id
