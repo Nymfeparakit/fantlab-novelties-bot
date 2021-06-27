@@ -90,6 +90,7 @@ def get_books_ids_from_shelf(shelf_id, user_id):
     offset = 0
     while True:
         shelf_info = api_helper.get(f'{FANTLAB_API_URL}user/{user_id}/bookcase/{shelf_id}?offset={offset}')
+        return None
         shelf_books = shelf_info['bookcase_items']
         shelf_books_ids.extend([item['edition_id'] for item in shelf_books])
         if not shelf_info: # если больше нет книг по запросу
@@ -104,7 +105,6 @@ async def process_novelties(user_id):
     fantlab_user_id = read_user_id()
     # получаем полку "Куплю"
     # TODO: обработка ошибок от сервера
-    # response_text = requests.get(f'{FANTLAB_API_URL}user/{fantlab_user_id}/bookcases').text
     shelfs = api_helper.get(f'{FANTLAB_API_URL}user/{fantlab_user_id}/bookcases')
     if not shelfs:
         return
@@ -114,10 +114,13 @@ async def process_novelties(user_id):
 
     # получаем id всех изданий с полки "куплю"
     shelf_books_ids = get_books_ids_from_shelf(buy_shelf_id, fantlab_user_id)
+    if not shelf_books_ids:
+        return
 
     # получаем сведения о новинках
-    response_text = requests.get(f'{FANTLAB_API_URL}pubnews').text
-    news = json.loads(response_text)['objects']
+    news = api_helper.get(f'{FANTLAB_API_URL}pubnews')
+    if not news:
+        return
     found_book = False
     for news_item in news:
         if news_item['edition_id'] in shelf_books_ids:
