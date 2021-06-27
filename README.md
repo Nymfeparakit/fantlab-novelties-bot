@@ -1,4 +1,4 @@
-# fantlab-novelties-bot
+# FantlabNoveltiesBot
 
 [t.me/FantlabNoveltiesBot](https://t.me/FantlabNoveltiesBot) - бот, помогающий следить за выходящими в продаже новинками в мире книг жанра фантастики.  
 Для отслеживания новостей используется [Fantlab API](https://github.com/FantLab/FantLab-API).
