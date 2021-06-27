@@ -4,8 +4,9 @@ from aiogram import Bot, types
 from aiogram.dispatcher import Dispatcher
 from aiogram.utils import executor
 import json
-# from settings import BOT_TOKEN, HEROKU_APP_NAME, WEBHOOK_HOST, WEBHOOK_PATH, WEBHOOK_URL, WEBAPP_PORT, WEBAPP_HOST
-from settings import BOT_TOKEN, SEARCH_DELAY
+from settings import BOT_TOKEN, FANTLAB_BOT_PROD_MODE
+if FANTLAB_BOT_PROD_MODE:
+    from settings import BOT_TOKEN, HEROKU_APP_NAME, WEBHOOK_HOST, WEBHOOK_PATH, WEBHOOK_URL, WEBAPP_PORT, WEBAPP_HOST
 import asyncio
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher import FSMContext
@@ -143,8 +144,9 @@ async def process_novelties(user_id):
         logging.info("Книг не найдено")
 
 
-# async def on_startup(dp):
-    # await bot.set_webhook(WEBHOOK_URL, drop_pending_updates=True)
+async def on_startup(dp):
+    if FANTLAB_BOT_PROD_MODE:
+        await bot.set_webhook(WEBHOOK_URL, drop_pending_updates=True)
 
 
 def repeat(coro, loop, user_id):
@@ -153,12 +155,14 @@ def repeat(coro, loop, user_id):
 
 
 if __name__ == '__main__':
-    # executor.start_webhook(
-    #     dispatcher=dp,
-    #     webhook_path=WEBHOOK_PATH,
-    #     skip_updates=True,
-    #     on_startup=on_startup,
-    #     host=WEBAPP_HOST,
-    #     port=WEBAPP_PORT
-    #     )
-    executor.start_polling(dp, skip_updates=True)
+    if FANTLAB_BOT_PROD_MODE:
+        executor.start_webhook(
+            dispatcher=dp,
+            webhook_path=WEBHOOK_PATH,
+            skip_updates=True,
+            on_startup=on_startup,
+            host=WEBAPP_HOST,
+            port=WEBAPP_PORT
+            )
+    else:
+        executor.start_polling(dp, skip_updates=True)
