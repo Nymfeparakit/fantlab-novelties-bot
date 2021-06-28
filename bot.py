@@ -13,17 +13,23 @@ from aiogram.dispatcher import FSMContext
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 import logging
 import api_helper
+from logging.handlers import RotatingFileHandler
 
 
 load_dotenv()
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(filename='log', encoding='utf-8', level=logging.INFO)
+log_file_handler = RotatingFileHandler('logs/log', encoding='utf-8', maxBytes=10*1024, backupCount=2)
+log_file_handler.setLevel(logging.INFO)
+bot_log = logging.getLogger('root')
+bot_log.setLevel(logging.INFO)
+bot_log.addHandler(log_file_handler)
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 
-SEARCH_DELAY = 60 * 20 # Интервал для поиска книг
+SEARCH_DELAY = 60 * 60 # Интервал для поиска книг
 FANTLAB_API_URL = 'https://api.fantlab.ru/'
 OZON_EDITION_URL = 'https://www.ozon.ru/context/detail/id/' # URL для доступа к изданию на ozon по id
 LABIRINT_EDITION_URL = 'https://www.labirint.ru/books/' # URL для доступа к изданию на лабиринте по id
@@ -35,6 +41,7 @@ class SetLoginStatesGroup(StatesGroup):
 
 @dp.message_handler(commands=['start'], state='*')
 async def process_start_command(message: types.Message):
+    bot_log.info("Process start command")
     await message.answer("Привет! Я бот для fantlab.ru!")
     await message.answer("Напишите свой логин на fantlab.ru")
     await SetLoginStatesGroup.waiting_for_login.set()
@@ -106,7 +113,7 @@ def get_books_ids_from_shelf(shelf_id, user_id):
 
 async def process_novelties(user_id):
     await bot.send_message(user_id, "Начинаю искать книги")
-    logging.info("Бот начинает искать книги")
+    bot_log.info("Бот начинает искать книги")
     # TODO: обработка ошибки на случай, если логин не был прочитан
     fantlab_user_id = read_user_id()
     # получаем полку "Куплю"
@@ -130,7 +137,7 @@ async def process_novelties(user_id):
     for news_item in news:
         if news_item['edition_id'] in shelf_books_ids:
             found_book = True
-            logging.info(f"found item on shelf: {news_item['edition_id']}")
+            bot_log.info(f"found item on shelf: {news_item['edition_id']}")
             message_text = f"""Книга с полки 'Куплю' есть в продаже: 
             \* {news_item['name']}
             """
@@ -141,7 +148,7 @@ async def process_novelties(user_id):
             await bot.send_message(user_id, message_text, parse_mode='MarkdownV2')
     if not found_book:
         await bot.send_message(user_id, "Книги не найдены")
-        logging.info("Книг не найдено")
+        bot_log.info("Книг не найдено")
 
 
 async def on_startup(dp):
