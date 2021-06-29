@@ -1,6 +1,6 @@
 # FantlabNoveltiesBot
 Бот, помогающий следить за выходящими в продаже новинками в мире книг жанра фантастики.  
-Для отслеживания новостей используется [Fantlab API](https://github.com/FantLab/FantLab-API).
+Для отслеживания новостей используется [Fantlab API](https://github.com/FantLab/FantLab-API).  
 На данный момент еще находится на стадии разработки.
 
 ## Usage
