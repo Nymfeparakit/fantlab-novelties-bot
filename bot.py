@@ -104,9 +104,9 @@ def get_books_ids_from_shelf(shelf_id, user_id):
     while True:
         shelf_info = api_helper.get(f'{FANTLAB_API_URL}user/{user_id}/bookcase/{shelf_id}?offset={offset}')
         shelf_books = shelf_info['bookcase_items']
-        shelf_books_ids.extend([item['edition_id'] for item in shelf_books])
-        if not shelf_info: # если больше нет книг по запросу
+        if not shelf_books: # если больше нет книг по запросу
             return shelf_books_ids
+        shelf_books_ids.extend([item['edition_id'] for item in shelf_books])
         offset += 10
 
 
@@ -114,11 +114,13 @@ async def process_novelties(user_id):
     await bot.send_message(user_id, "Начинаю искать книги")
     bot_log.info("Бот начинает искать книги")
     # TODO: обработка ошибки на случай, если логин не был прочитан
+    bot_log.info("Читаем логин")
     fantlab_user_id = read_user_id()
     # получаем полку "Куплю"
     # TODO: обработка ошибок от сервера
     shelfs = api_helper.get(f'{FANTLAB_API_URL}user/{fantlab_user_id}/bookcases')
     if not shelfs:
+        bot_log.info(f"У пользователя {fantlab_user_id} нет полок")
         return
     buy_shelf = list(filter(lambda shelf: shelf['bookcase_name'] == 'Куплю', shelfs))[0]
     buy_shelf_id = buy_shelf['bookcase_id']
@@ -126,6 +128,7 @@ async def process_novelties(user_id):
     # получаем id всех изданий с полки "куплю"
     shelf_books_ids = get_books_ids_from_shelf(buy_shelf_id, fantlab_user_id)
     if not shelf_books_ids:
+        bot_log.info(f"У пользователя {fantlab_user_id} нет полки 'Куплю'")
         return
 
     # получаем сведения о новинках
