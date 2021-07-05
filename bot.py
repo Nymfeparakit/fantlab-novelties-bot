@@ -29,7 +29,7 @@ bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 
-SEARCH_DELAY = 60 * 60 # Интервал для поиска книг
+SEARCH_DELAY = 60 * 60 if FANTLAB_BOT_PROD_MODE else 10 # Интервал для поиска книг
 FANTLAB_API_URL = 'https://api.fantlab.ru/'
 OZON_EDITION_URL = 'https://www.ozon.ru/context/detail/id/' # URL для доступа к изданию на ozon по id
 LABIRINT_EDITION_URL = 'https://www.labirint.ru/books/' # URL для доступа к изданию на лабиринте по id
