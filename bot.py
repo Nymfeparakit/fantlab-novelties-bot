@@ -103,7 +103,6 @@ def get_books_ids_from_shelf(shelf_id, user_id):
     offset = 0
     while True:
         shelf_info = api_helper.get(f'{FANTLAB_API_URL}user/{user_id}/bookcase/{shelf_id}?offset={offset}')
-        return None
         shelf_books = shelf_info['bookcase_items']
         shelf_books_ids.extend([item['edition_id'] for item in shelf_books])
         if not shelf_info: # если больше нет книг по запросу
