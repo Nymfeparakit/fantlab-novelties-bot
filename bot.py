@@ -132,7 +132,7 @@ async def process_novelties(user_id):
         return
 
     # получаем сведения о новинках
-    news = api_helper.get(f'{FANTLAB_API_URL}pubnews')
+    news = api_helper.get(f'{FANTLAB_API_URL}pubnews')['objects']
     if not news:
         return
     found_book = False
